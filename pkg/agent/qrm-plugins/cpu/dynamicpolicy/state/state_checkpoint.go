@@ -103,7 +103,6 @@ func (sc *stateCheckpoint) RestoreState(topology *machine.CPUTopology) error {
 
 	sc.cache.SetMachineState(generatedMachineState)
 	sc.cache.SetPodEntries(checkpoint.PodEntries)
-	sc.cache.SetAllowSharedCoresOverlapReclaimedCores(checkpoint.AllowSharedCoresOverlapReclaimedCores)
 
 	if !reflect.DeepEqual(generatedMachineState, checkpoint.MachineState) {
 		klog.Warningf("[cpu_plugin] machine state changed: generatedMachineState: %s; checkpointMachineState: %s",
@@ -131,7 +130,6 @@ func (sc *stateCheckpoint) storeState() error {
 	checkpoint.PolicyName = sc.policyName
 	checkpoint.MachineState = sc.cache.GetMachineState()
 	checkpoint.PodEntries = sc.cache.GetPodEntries()
-	checkpoint.AllowSharedCoresOverlapReclaimedCores = sc.cache.GetAllowSharedCoresOverlapReclaimedCores()
 
 	err := sc.checkpointManager.CreateCheckpoint(sc.checkpointName, checkpoint)
 	if err != nil {
