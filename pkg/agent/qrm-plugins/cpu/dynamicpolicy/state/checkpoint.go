@@ -18,6 +18,7 @@ package state
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"k8s.io/kubernetes/pkg/kubelet/checkpointmanager"
 	"k8s.io/kubernetes/pkg/kubelet/checkpointmanager/checksum"
@@ -56,6 +57,8 @@ func (cp *CPUPluginCheckpoint) UnmarshalCheckpoint(blob []byte) error {
 func (cp *CPUPluginCheckpoint) VerifyChecksum() error {
 	ck := cp.Checksum
 	cp.Checksum = 0
+	fmt.Printf("ck: %#v \n", ck)
+	fmt.Printf("cp: %#v \n", *cp)
 	err := ck.Verify(cp)
 	cp.Checksum = ck
 	return err
