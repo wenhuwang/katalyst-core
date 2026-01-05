@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -37,6 +38,7 @@ var (
 		CgroupFsRootPathBestEffort,
 		CgroupFsRootPathBurstable,
 	)
+	k8sCgroupType = CgroupTypeCgroupfs
 )
 
 var k8sCgroupPathSettingOnce = sync.Once{}
@@ -47,6 +49,7 @@ var k8sCgroupPathSettingOnce = sync.Once{}
 func InitKubernetesCGroupPath(cgroupType CgroupType, additionalK8SCGroupPath []string) {
 	k8sCgroupPathSettingOnce.Do(func() {
 		if cgroupType == CgroupTypeSystemd {
+			k8sCgroupType = CgroupTypeSystemd
 			k8sCgroupPathLock.Lock()
 			defer k8sCgroupPathLock.Unlock()
 			k8sCgroupPathList = sets.NewString(
@@ -106,7 +109,13 @@ func GetKubernetesAnyExistAbsCgroupPath(subsys, suffix string) (string, error) {
 	defer k8sCgroupPathLock.RUnlock()
 
 	for _, cgPath := range k8sCgroupPathList.List() {
-		p := GetKubernetesAbsCgroupPath(subsys, path.Join(cgPath, suffix))
+		var suffixPath string
+		base := path.Base(cgPath)
+		if strings.HasSuffix(base, SystemdSliceSuffix) {
+			prefix := strings.TrimSuffix(base, SystemdSliceSuffix)
+			suffixPath = fmt.Sprintf("%s-%s", prefix, suffix)
+		}
+		p := GetKubernetesAbsCgroupPath(subsys, path.Join(cgPath, suffixPath))
 		if general.IsPathExists(p) {
 			return p, nil
 		}
@@ -137,11 +146,20 @@ func GetKubernetesAnyExistRelativeCgroupPath(suffix string) (string, error) {
 
 // GetPodAbsCgroupPath returns absolute cgroup path for pod level
 func GetPodAbsCgroupPath(subsys, podUID string) (string, error) {
+	if k8sCgroupType == CgroupTypeSystemd {
+		podPath := fmt.Sprintf("%s%s%s", PodCgroupPathPrefix, strings.ReplaceAll(podUID, "-", "_"), SystemdSliceSuffix)
+		return GetKubernetesAnyExistAbsCgroupPath(subsys, podPath)
+	}
 	return GetKubernetesAnyExistAbsCgroupPath(subsys, fmt.Sprintf("%s%s", PodCgroupPathPrefix, podUID))
 }
 
 // GetContainerAbsCgroupPath returns absolute cgroup path for container level
 func GetContainerAbsCgroupPath(subsys, podUID, containerId string) (string, error) {
+	if k8sCgroupType == CgroupTypeSystemd {
+		podPath := fmt.Sprintf("%s%s%s", PodCgroupPathPrefix, strings.ReplaceAll(podUID, "-", "_"), SystemdSliceSuffix)
+		containerPath := fmt.Sprintf("%s%s%s", SystemdCriPrefix, containerId, SystemdScopeSuffix)
+		return GetKubernetesAnyExistAbsCgroupPath(subsys, path.Join(podPath, containerPath))
+	}
 	return GetKubernetesAnyExistAbsCgroupPath(subsys, path.Join(fmt.Sprintf("%s%s", PodCgroupPathPrefix, podUID), containerId))
 }
 

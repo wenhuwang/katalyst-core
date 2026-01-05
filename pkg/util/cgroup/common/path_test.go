@@ -58,7 +58,11 @@ func TestGetContainerAbsCgroupPath(t *testing.T) {
 	t.Parallel()
 
 	as := require.New(t)
-	_, err := GetContainerAbsCgroupPath("cpuset", "", "")
+	_, err := GetContainerAbsCgroupPath("cpu", "fake-pod-uid", "fakecontainerid")
+	as.NotNil(err)
+
+	InitKubernetesCGroupPath(CgroupTypeSystemd, []string{})
+	_, err = GetContainerAbsCgroupPath("cpu", "fake-pod-uid1", "fakecontainerid1")
 	as.NotNil(err)
 }
 

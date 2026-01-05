@@ -45,6 +45,9 @@ const (
 	SystemdRootPath           = "/kubepods.slice"
 	SystemdRootPathBestEffort = "/kubepods.slice/kubepods-besteffort.slice"
 	SystemdRootPathBurstable  = "/kubepods.slice/kubepods-burstable.slice"
+	SystemdSliceSuffix        = ".slice"
+	SystemdScopeSuffix        = ".scope"
+	SystemdCriPrefix          = "cri-containerd-"
 )
 
 // defaultSelectedSubsysList cgroupv1 most common subsystems
