@@ -110,10 +110,14 @@ func GetKubernetesAnyExistAbsCgroupPath(subsys, suffix string) (string, error) {
 
 	for _, cgPath := range k8sCgroupPathList.List() {
 		var suffixPath string
-		base := path.Base(cgPath)
-		if strings.HasSuffix(base, SystemdSliceSuffix) {
-			prefix := strings.TrimSuffix(base, SystemdSliceSuffix)
-			suffixPath = fmt.Sprintf("%s-%s", prefix, suffix)
+		if k8sCgroupType == CgroupTypeSystemd {
+			base := path.Base(cgPath)
+			if strings.HasSuffix(base, SystemdSliceSuffix) {
+				prefix := strings.TrimSuffix(base, SystemdSliceSuffix)
+				suffixPath = fmt.Sprintf("%s-%s", prefix, suffix)
+			}
+		} else {
+			suffixPath = suffix
 		}
 		p := GetKubernetesAbsCgroupPath(subsys, path.Join(cgPath, suffixPath))
 		if general.IsPathExists(p) {
