@@ -66,6 +66,18 @@ func TestGetContainerAbsCgroupPath(t *testing.T) {
 	as.NotNil(err)
 }
 
+func TestGetContainerRelativeCgroupPath(t *testing.T) {
+	t.Parallel()
+
+	as := require.New(t)
+	_, err := GetContainerRelativeCgroupPath("fake-pod-uid", "fakecontainerid")
+	as.NotNil(err)
+
+	InitKubernetesCGroupPath(CgroupTypeSystemd, []string{})
+	_, err = GetContainerRelativeCgroupPath("fake-pod-uid1", "fakecontainerid1")
+	as.NotNil(err)
+}
+
 func TestIsContainerCgroupExist(t *testing.T) {
 	t.Parallel()
 
